@@ -1,13 +1,19 @@
-﻿using App.Data.Context;
+﻿using App;
+using App.Data.Context;
 using App.Data.Models.Extensions;
 using App.Data.Models.ValueObjects;
 using App.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContextPool<AppDbContext>(opts => opts.UseSqlite("Data Source = test.sqlite"));
+builder.Services.AddDbContextPool<AppDbContext>(opts =>
+{
+    opts.UseSqlite("Data Source = test.sqlite");
+    opts.ReplaceService<IValueConverterSelector, StronglyTypedIdValueConverterSelector>();
+});
 
 var app = builder.Build();
 
@@ -47,6 +53,15 @@ app.MapPut("/users/{id:int}/name", async (int id, [FromQuery] string firstName, 
     user.UpdateFirstName(firstName);
     await context.SaveChangesAsync(ctx);
     return Results.Ok();
+});
+
+app.MapDelete("/users/{id:guid}", async (Guid id, AppDbContext context, CancellationToken ctx) =>
+{
+    var user = await context.Users.FindAsync(new UserId(id), ctx);
+    if (user is null) return Results.NotFound();
+    context.Users.Remove(user);
+    await context.SaveChangesAsync(ctx);
+    return Results.NoContent();
 });
 
 app.Run();

@@ -11,10 +11,4 @@ public sealed class AppDbContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(Program).Assembly);
-        base.OnModelCreating(modelBuilder);
-    }
 }

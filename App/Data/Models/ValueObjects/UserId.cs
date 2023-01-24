@@ -1,3 +1,6 @@
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
 namespace App.Data.Models.ValueObjects;
 
 public record struct UserId
@@ -18,5 +21,11 @@ public record struct UserId
     public static UserId CreateUnique()
     {
         return new(Guid.NewGuid());
+    }
+
+    public class StronglyTypedIdEfValueConverter : ValueConverter<UserId, Guid>
+    {
+        public StronglyTypedIdEfValueConverter(ConverterMappingHints? mappingHints = null)
+            : base(id => id.Value, value => new UserId(value), mappingHints) { }
     }
 }
